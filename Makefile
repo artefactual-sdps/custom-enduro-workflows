@@ -40,20 +40,25 @@ endef
 
 IGNORED_PACKAGES := \
 	github.com/artefactual-sdps/preprocessing-base/hack/% \
-	github.com/artefactual-sdps/preprocessing-sfa/internal/enums
+	github.com/artefactual-sdps/preprocessing-base/internal/enums
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
 export PATH:=$(GOBIN):$(PATH)
 
+deps: # @HELP List available module dependency updates.
+deps: $(GOMAJOR)
+	gomajor list
+
 env: # @HELP Print Go env variables.
 env:
 	go env
 
-deps: # @HELP List available module dependency updates.
-deps: $(GOMAJOR)
-	gomajor list
+fmt: # @HELP Format the project Go files with golangci-lint.
+fmt: FMT_FLAGS ?=
+fmt: $(GOLANGCI_LINT)
+	golangci-lint fmt $(FMT_FLAGS)
 
 golines: # @HELP Run the golines formatter to fix long lines.
 golines: GOLINES_OUT_MODE ?= write-output
@@ -89,13 +94,13 @@ lint: LINT_FLAGS ?= --timeout=5m --fix --output.text.colors
 lint: $(GOLANGCI_LINT)
 	golangci-lint run $(LINT_FLAGS)
 
-list-tested-packages: # @HELP Print a list of packages being tested.
-list-tested-packages:
-	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
-
 list-ignored-packages: # @HELP Print a list of packages ignored in testing.
 list-ignored-packages:
 	$(foreach PACKAGE,$(TEST_IGNORED_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
+
+list-tested-packages: # @HELP Print a list of packages being tested.
+list-tested-packages:
+	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
 mod-tidy-check: # @HELP Check that mod files are tidy.
 	go mod tidy -diff
