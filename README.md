@@ -28,6 +28,7 @@ To create a new preprocessing child workflow project:
   - The default Docker image name
   - The Makefile project name and the location of the installed tools
   - The `appName` in the worker command
+  - The gci "prefix" section in the `.golangci.yml` config file
 - Update this readme file:
   - Change the heading and initial description
   - Remove the first three sections from the list above and the content
