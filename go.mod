@@ -1,6 +1,6 @@
 module github.com/artefactual-sdps/preprocessing-base
 
-go 1.24.2
+go 1.24.12
 
 require (
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20250116225551-b0b1966e3e19
