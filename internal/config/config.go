@@ -23,12 +23,9 @@ type Configuration struct {
 	// number of messages logged.
 	Verbosity int
 
-	// SharedPath is a file path that both Preprocessing and Enduro can access
-	// (required).
-	//
-	// Enduro will deposit transfers in SharedPath for preprocessing.
-	// Preprocessing must write transfer updates to SharedPath for retrieval by
-	// Enduro and preservation processing.
+	// SharedPath is a directory path that both the custom worker and the Enduro
+	// workers can access. This is required for preprocessing workers to share
+	// the SIP.
 	SharedPath string
 
 	Temporal Temporal
@@ -55,7 +52,7 @@ type Temporal struct {
 
 type WorkerConfig struct {
 	// MaxConcurrentSessions limits the number of workflow sessions the
-	// preprocessing worker can handle simultaneously (default: 1).
+	// custom worker can handle simultaneously (default: 1).
 	MaxConcurrentSessions int
 }
 
@@ -94,8 +91,8 @@ func Read(config *Configuration, configFile string) (found bool, configFileUsed 
 	v.AddConfigPath(".")
 	v.AddConfigPath("$HOME/.config/")
 	v.AddConfigPath("/etc")
-	v.SetConfigName("preprocessing")
-	v.SetEnvPrefix("ENDURO_PREPROCESSING")
+	v.SetConfigName("custom-enduro")
+	v.SetEnvPrefix("CUSTOM_ENDURO")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 

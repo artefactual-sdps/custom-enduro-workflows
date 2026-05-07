@@ -49,7 +49,7 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/artefactual-sdps/preprocessing-base)
+        - prefix(github.com/artefactual-sdps/custom-enduro-workflows)
       no-inline-comments: true
       no-prefix-comments: false
     gofumpt:

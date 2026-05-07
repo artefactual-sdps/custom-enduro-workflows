@@ -1,36 +1,36 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: preprocessing-worker
+  name: custom-enduro-worker
   labels:
-    app: preprocessing-worker
+    app: custom-enduro-worker
 spec:
-  serviceName: preprocessing-worker
+  serviceName: custom-enduro-worker
   selector:
     matchLabels:
-      app: preprocessing-worker
+      app: custom-enduro-worker
   template:
     metadata:
       labels:
-        app: preprocessing-worker
+        app: custom-enduro-worker
     spec:
       serviceAccountName: sdps
       securityContext:
         fsGroup: 1000
       containers:
-        - name: preprocessing-worker
-          image: preprocessing-base-worker:dev
+        - name: custom-enduro-worker
+          image: custom-enduro-worker:dev
           volumeMounts:
             - name: config
-              mountPath: /home/preprocessing/.config
+              mountPath: /home/enduro/.config
               readOnly: true
             - name: shared-dir
-              mountPath: /home/preprocessing/shared
+              mountPath: /home/enduro/shared
           resources: {}
       volumes:
         - name: config
           secret:
-            secretName: preprocessing-secret
+            secretName: custom-enduro-secret
         - name: shared-dir
           persistentVolumeClaim:
             claimName: preprocessing-pvc

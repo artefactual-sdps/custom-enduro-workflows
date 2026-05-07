@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/artefactual-sdps/preprocessing-base/internal/enums"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/enums"
 )
 
 type Event struct {

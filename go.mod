@@ -1,4 +1,4 @@
-module github.com/artefactual-sdps/preprocessing-base
+module github.com/artefactual-sdps/custom-enduro-workflows
 
 go 1.24.12
 

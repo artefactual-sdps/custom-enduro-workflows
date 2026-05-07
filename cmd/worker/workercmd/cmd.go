@@ -12,11 +12,9 @@ import (
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
-	"github.com/artefactual-sdps/preprocessing-base/internal/config"
-	"github.com/artefactual-sdps/preprocessing-base/internal/workflow"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/config"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/workflow"
 )
-
-const Name = "preprocessing-worker"
 
 type Main struct {
 	logger         logr.Logger

@@ -7,8 +7,8 @@ import (
 
 	"gotest.tools/v3/assert"
 
-	"github.com/artefactual-sdps/preprocessing-base/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-base/internal/eventlog"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/enums"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/eventlog"
 )
 
 func TestEvent(t *testing.T) {

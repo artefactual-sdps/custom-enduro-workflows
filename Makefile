@@ -1,4 +1,4 @@
-PROJECT := preprocessing-base
+PROJECT := custom-enduro-workflows
 MAKEDIR := hack/make
 SHELL   := /bin/bash
 
@@ -39,8 +39,8 @@ define NEWLINE
 endef
 
 IGNORED_PACKAGES := \
-	github.com/artefactual-sdps/preprocessing-base/hack/% \
-	github.com/artefactual-sdps/preprocessing-base/internal/enums
+	github.com/artefactual-sdps/custom-enduro-workflows/hack/% \
+	github.com/artefactual-sdps/custom-enduro-workflows/internal/enums
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))

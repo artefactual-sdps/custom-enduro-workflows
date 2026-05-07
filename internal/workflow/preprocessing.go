@@ -10,8 +10,8 @@ import (
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
 
-	"github.com/artefactual-sdps/preprocessing-base/internal/enums"
-	"github.com/artefactual-sdps/preprocessing-base/internal/eventlog"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/enums"
+	"github.com/artefactual-sdps/custom-enduro-workflows/internal/eventlog"
 )
 
 type Outcome int

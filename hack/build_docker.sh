@@ -4,7 +4,7 @@ set -eu
 
 eval $(./hack/build_dist.sh shellvars)
 
-DEFAULT_IMAGE_NAME="preprocessing-base-worker:${VERSION_SHORT}"
+DEFAULT_IMAGE_NAME="custom-enduro-worker:${VERSION_SHORT}"
 TILT_EXPECTED_REF=${EXPECTED_REF:-}
 IMAGE_NAME="${TILT_EXPECTED_REF:-$DEFAULT_IMAGE_NAME}"
 BUILD_OPTS="${BUILD_OPTS:-}"
