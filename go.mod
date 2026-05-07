@@ -1,6 +1,6 @@
 module github.com/artefactual-sdps/custom-enduro-workflows
 
-go 1.24.12
+go 1.26.2
 
 require (
 	github.com/artefactual-sdps/temporal-activities v0.0.0-20251201141011-5441336d8fa2
