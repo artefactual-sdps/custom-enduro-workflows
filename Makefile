@@ -14,25 +14,6 @@ else
     MAKEFLAGS += -s
 endif
 
-include hack/make/bootstrap.mk
-include hack/make/dep_go_enum.mk
-include hack/make/dep_golangci_lint.mk
-include hack/make/dep_golines.mk
-include hack/make/dep_gomajor.mk
-include hack/make/dep_gosec.mk
-include hack/make/dep_gotestsum.mk
-include hack/make/dep_shfmt.mk
-include hack/make/dep_tparse.mk
-include hack/make/enums.mk
-
-# Lazy-evaluated list of tools.
-TOOLS = $(GOLANGCI_LINT) \
-	$(GOMAJOR) \
-	$(GOSEC) \
-	$(GOTESTSUM) \
-	$(SHFMT) \
-	$(TPARSE)
-
 define NEWLINE
 
 
@@ -41,15 +22,17 @@ endef
 IGNORED_PACKAGES := \
 	github.com/artefactual-sdps/custom-enduro-workflows/hack/% \
 	github.com/artefactual-sdps/custom-enduro-workflows/internal/enums
+
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
 TEST_IGNORED_PACKAGES := $(filter $(IGNORED_PACKAGES),$(PACKAGES))
 
-export PATH:=$(GOBIN):$(PATH)
+# Configure bine.
+export PATH := $(shell go tool bine path):$(PATH)
 
 deps: # @HELP List available module dependency updates.
-deps: $(GOMAJOR)
-	gomajor list
+deps: tool-go-mod-outdated
+	go list -u -m -json all | go-mod-outdated -direct -update
 
 env: # @HELP Print Go env variables.
 env:
@@ -57,41 +40,35 @@ env:
 
 fmt: # @HELP Format the project Go files with golangci-lint.
 fmt: FMT_FLAGS ?=
-fmt: $(GOLANGCI_LINT)
+fmt: tool-golangci-lint
 	golangci-lint fmt $(FMT_FLAGS)
 
-golines: # @HELP Run the golines formatter to fix long lines.
-golines: GOLINES_OUT_MODE ?= write-output
-golines: $(GOLINES)
-	golines \
-		--chain-split-dots \
-		--ignored-dirs="$(TEST_IGNORED_PACKAGES)" \
-		--max-len=120 \
-		--reformat-tags \
-		--shorten-comments \
-		--$(GOLINES_OUT_MODE) \
-		.
+gen-enums: # @HELP Generate go-enum assets.
+gen-enums: ENUM_FLAGS = --names --template=$(CURDIR)/hack/make/enums.tmpl
+gen-enums: tool-go-enum
+	go-enum $(ENUM_FLAGS) \
+		--nocomments \
+		-f internal/enums/event_outcome.go
 
 gosec: # @HELP Run gosec security scanner.
 gosec: GOSEC_VERBOSITY ?= "-terse"
-gosec: $(GOSEC)
-	gosec \
-		$(GOSEC_VERBOSITY) \
-		-exclude-dir=hack \
-		./...
+gosec: tool-gosec
+	go tool bine upgrade gosec
+	gosec $(GOSEC_VERBOSITY) -exclude-dir=hack ./...
+
+govulncheck: # @HELP Run govulncheck security scanner.
+govulncheck: tool-govulncheck
+	go tool bine upgrade govulncheck
+	govulncheck $(GOVULNCHECK_FLAGS) ./...
 
 help: # @HELP Print this message.
-help:
 	echo "TARGETS:"
-	grep -E '^.*: *# *@HELP' Makefile             \
-	    | awk '                                   \
-	        BEGIN {FS = ": *# *@HELP"};           \
-	        { printf "  %-30s %s\n", $$1, $$2 };  \
-	    '
+	grep -hE '^.*:.*?# *@HELP' $(MAKEFILE_LIST) | sort | \
+	    awk 'BEGIN {FS = ":.*?# *@HELP"}; { printf "  %-30s %s\n", $$1, $$2 };'
 
 lint: # @HELP Lint the project Go files with golangci-lint.
 lint: LINT_FLAGS ?= --timeout=5m --fix --output.text.colors
-lint: $(GOLANGCI_LINT)
+lint: tool-golangci-lint
 	golangci-lint run $(LINT_FLAGS)
 
 list-ignored-packages: # @HELP Print a list of packages ignored in testing.
@@ -102,20 +79,18 @@ list-tested-packages: # @HELP Print a list of packages being tested.
 list-tested-packages:
 	$(foreach PACKAGE,$(TEST_PACKAGES),@echo $(PACKAGE)$(NEWLINE))
 
-mod-tidy-check: # @HELP Check that mod files are tidy.
-	go mod tidy -diff
-
 pre-commit: # @HELP Check that code is ready to commit.
 pre-commit:
-	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) -j \
-	golines \
-	gosec GOSEC_VERBOSITY="-quiet" \
-	lint \
-	shfmt \
-	test-race
+	$(MAKE) -j \
+		fmt \
+		gen-enums \
+		gosec GOSEC_VERBOSITY="-quiet" \
+		lint \
+		shfmt \
+		test-race
 
 shfmt: SHELL_PROGRAMS := $(shell find $(CURDIR)/hack -name *.sh)
-shfmt: $(SHFMT) # @HELP Run shfmt to format shell programs in the hack directory.
+shfmt: tool-shfmt # @HELP Run shfmt to format shell programs in the hack directory.
 	shfmt \
 		--list \
 		--write \
@@ -132,23 +107,27 @@ test: # @HELP Run all tests and output a summary using gotestsum.
 test: TFORMAT ?= short
 test: GOTEST_FLAGS ?=
 test: COMBINED_FLAGS ?= $(GOTEST_FLAGS) $(TEST_PACKAGES)
-test: $(GOTESTSUM)
+test: tool-gotestsum
 	gotestsum --format=$(TFORMAT) -- $(COMBINED_FLAGS)
 
 test-ci: # @HELP Run all tests in CI with coverage and the race detector.
 test-ci:
-	ENDURO_PP_INTEGRATION_TEST=1 $(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
+	$(MAKE) test GOTEST_FLAGS="-race -coverprofile=covreport -covermode=atomic"
 
 test-race: # @HELP Run all tests with the race detector.
 test-race:
 	$(MAKE) test GOTEST_FLAGS="-race"
 
 test-tparse: # @HELP Run all tests and output a coverage report using tparse.
-test-tparse: $(TPARSE)
+test-tparse: tool-tparse
 	go test -count=1 -json -cover $(TEST_PACKAGES) | tparse -follow -all -notests
 
-tools: # @HELP Install tools.
-tools: $(TOOLS)
+tool-%:
+	@go tool bine get $* 1> /dev/null
+
+tools: # @HELP Install all tools managed by bine.
+tools:
+	go tool bine sync
 
 validate-tilt: # @HELP Validate the Tiltfile and Kubernetes manifests.
 	tilt alpha tiltfile-result > /dev/null

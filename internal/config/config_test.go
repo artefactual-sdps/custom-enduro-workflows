@@ -120,7 +120,6 @@ Bagit.ChecksumAlgorithm: invalid value "unknown", must be one of (md5, sha1, sha
 			wantErrContains: "configuration file not found: ",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

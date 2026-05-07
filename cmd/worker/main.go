@@ -49,7 +49,7 @@ func main() {
 	)
 	defer log.Sync(logger)
 
-	keys := []interface{}{
+	keys := []any{
 		"version", version.Long,
 		"pid", os.Getpid(),
 		"go", runtime.Version(),
@@ -66,6 +66,7 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() { <-c; cancel() }()

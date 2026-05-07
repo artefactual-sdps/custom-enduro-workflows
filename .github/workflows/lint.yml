@@ -14,7 +14,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: true
       - name: Get date
         id: get-date
         shell: bash
@@ -33,26 +32,10 @@ jobs:
         run: make lint
         env:
           GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
-  golines:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - name: Run golines
-        run: |
-          make golines > golines.diff
-          if [ -s golines.diff ]; then
-            echo "golines reported long lines"
-            cat golines.diff
-            exit 1
-          fi
+      - name: Run golangci-lint fmt
+        run: make fmt
         env:
-          GOLINES_OUT_MODE: dry-run
+          GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
   shfmt:
     runs-on: ubuntu-latest
     steps:
@@ -62,6 +45,5 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-          cache: true
       - name: Run shfmt
         run: make shfmt
