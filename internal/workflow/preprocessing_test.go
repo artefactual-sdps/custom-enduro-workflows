@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -13,8 +14,6 @@ import (
 	temporalsdk_worker "go.temporal.io/sdk/worker"
 
 	"github.com/artefactual-sdps/custom-enduro-workflows/internal/config"
-	"github.com/artefactual-sdps/custom-enduro-workflows/internal/enums"
-	"github.com/artefactual-sdps/custom-enduro-workflows/internal/eventlog"
 	"github.com/artefactual-sdps/custom-enduro-workflows/internal/workflow"
 )
 
@@ -66,23 +65,23 @@ func (s *PreprocessingTestSuite) TestSuccess() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&childwf.PreprocessingParams{RelativePath: relPath},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSuccess,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSuccess,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name:        "Bag SIP",
 					Message:     "SIP has been bagged",
-					Outcome:     enums.EventOutcomeSuccess,
+					Outcome:     childwf.TaskOutcomeSuccess,
 					StartedAt:   s.env.Now().UTC(),
 					CompletedAt: s.env.Now().UTC(),
 				},
@@ -112,23 +111,23 @@ func (s *PreprocessingTestSuite) TestSystemError() {
 
 	s.env.ExecuteWorkflow(
 		s.workflow.Execute,
-		&workflow.PreprocessingWorkflowParams{RelativePath: relPath},
+		&childwf.PreprocessingParams{RelativePath: relPath},
 	)
 
 	s.True(s.env.IsWorkflowCompleted())
 
-	var result workflow.PreprocessingWorkflowResult
+	var result childwf.PreprocessingResult
 	err := s.env.GetWorkflowResult(&result)
 	s.NoError(err)
 	s.Equal(
-		&workflow.PreprocessingWorkflowResult{
-			Outcome:      workflow.OutcomeSystemError,
+		&childwf.PreprocessingResult{
+			Outcome:      childwf.OutcomeSystemError,
 			RelativePath: relPath,
-			PreservationTasks: []*eventlog.Event{
+			Tasks: []*childwf.Task{
 				{
 					Name:        "Bag SIP",
 					Message:     "System error: bagging has failed",
-					Outcome:     enums.EventOutcomeSystemFailure,
+					Outcome:     childwf.TaskOutcomeSystemFailure,
 					StartedAt:   s.env.Now().UTC(),
 					CompletedAt: s.env.Now().UTC(),
 				},

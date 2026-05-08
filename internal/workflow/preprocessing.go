@@ -5,105 +5,52 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/artefactual-sdps/enduro/pkg/childwf"
 	"github.com/artefactual-sdps/temporal-activities/bagcreate"
 	"go.artefactual.dev/tools/temporal"
 	temporalsdk_temporal "go.temporal.io/sdk/temporal"
 	temporalsdk_workflow "go.temporal.io/sdk/workflow"
-
-	"github.com/artefactual-sdps/custom-enduro-workflows/internal/enums"
-	"github.com/artefactual-sdps/custom-enduro-workflows/internal/eventlog"
 )
-
-type Outcome int
-
-const (
-	OutcomeSuccess Outcome = iota
-	OutcomeSystemError
-	OutcomeContentError
-)
-
-type PreprocessingWorkflowParams struct {
-	RelativePath string
-}
-
-type PreprocessingWorkflowResult struct {
-	Outcome           Outcome
-	RelativePath      string
-	PreservationTasks []*eventlog.Event
-}
-
-func (r *PreprocessingWorkflowResult) newEvent(ctx temporalsdk_workflow.Context, name string) *eventlog.Event {
-	ev := eventlog.NewEvent(temporalsdk_workflow.Now(ctx), name)
-	r.PreservationTasks = append(r.PreservationTasks, ev)
-
-	return ev
-}
-
-func (r *PreprocessingWorkflowResult) systemError(
-	ctx temporalsdk_workflow.Context,
-	err error,
-	ev *eventlog.Event,
-	msg string,
-) *PreprocessingWorkflowResult {
-	logger := temporalsdk_workflow.GetLogger(ctx)
-	logger.Error("System error", "message", err.Error())
-
-	// Complete last preservation task event.
-	ev.Complete(
-		temporalsdk_workflow.Now(ctx),
-		enums.EventOutcomeSystemFailure,
-		"System error: %s",
-		msg,
-	)
-	r.Outcome = OutcomeSystemError
-
-	return r
-}
 
 type PreprocessingWorkflow struct {
 	sharedPath string
 }
 
 func NewPreprocessingWorkflow(sharedPath string) *PreprocessingWorkflow {
-	return &PreprocessingWorkflow{
-		sharedPath: sharedPath,
-	}
+	return &PreprocessingWorkflow{sharedPath: sharedPath}
 }
 
 func (w *PreprocessingWorkflow) Execute(
 	ctx temporalsdk_workflow.Context,
-	params *PreprocessingWorkflowParams,
-) (*PreprocessingWorkflowResult, error) {
-	var (
-		result PreprocessingWorkflowResult
-		e      error
-	)
-
+	params *childwf.PreprocessingParams,
+) (*childwf.PreprocessingResult, error) {
+	result := &childwf.PreprocessingResult{}
 	logger := temporalsdk_workflow.GetLogger(ctx)
 	logger.Debug("PreprocessingWorkflow workflow running!", "params", params)
 
 	if params == nil || params.RelativePath == "" {
-		e = temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
-		return nil, e
+		return nil, temporal.NewNonRetryableError(fmt.Errorf("error calling workflow with unexpected inputs"))
 	}
 	result.RelativePath = params.RelativePath
 
 	// Bag the SIP for Enduro processing.
-	ev := result.newEvent(ctx, "Bag SIP")
+	task := result.NewTask(temporalsdk_workflow.Now(ctx), "Bag SIP")
 	var createBag bagcreate.Result
-	e = temporalsdk_workflow.ExecuteActivity(
+	err := temporalsdk_workflow.ExecuteActivity(
 		withLocalActOpts(ctx),
 		bagcreate.Name,
 		&bagcreate.Params{
 			SourcePath: filepath.Join(w.sharedPath, params.RelativePath),
 		},
 	).Get(ctx, &createBag)
-	if e != nil {
-		return result.systemError(ctx, e, ev, "bagging has failed"), nil
+	if err != nil {
+		logger.Error("System error", "message", err.Error())
+		result.SystemError(temporalsdk_workflow.Now(ctx), task, "bagging has failed")
+		return result, nil
 	}
-	ev.Succeed(temporalsdk_workflow.Now(ctx), "SIP has been bagged")
+	task.Succeed(temporalsdk_workflow.Now(ctx), "SIP has been bagged")
 
-	return &result, e
+	return result, nil
 }
 
 func withLocalActOpts(ctx temporalsdk_workflow.Context) temporalsdk_workflow.Context {

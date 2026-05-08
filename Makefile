@@ -20,8 +20,7 @@ define NEWLINE
 endef
 
 IGNORED_PACKAGES := \
-	github.com/artefactual-sdps/custom-enduro-workflows/hack/% \
-	github.com/artefactual-sdps/custom-enduro-workflows/internal/enums
+	github.com/artefactual-sdps/custom-enduro-workflows/hack/%
 
 PACKAGES := $(shell go list ./...)
 TEST_PACKAGES := $(filter-out $(IGNORED_PACKAGES),$(PACKAGES))
@@ -42,13 +41,6 @@ fmt: # @HELP Format the project Go files with golangci-lint.
 fmt: FMT_FLAGS ?=
 fmt: tool-golangci-lint
 	golangci-lint fmt $(FMT_FLAGS)
-
-gen-enums: # @HELP Generate go-enum assets.
-gen-enums: ENUM_FLAGS = --names --template=$(CURDIR)/hack/make/enums.tmpl
-gen-enums: tool-go-enum
-	go-enum $(ENUM_FLAGS) \
-		--nocomments \
-		-f internal/enums/event_outcome.go
 
 gosec: # @HELP Run gosec security scanner.
 gosec: GOSEC_VERBOSITY ?= "-terse"
@@ -83,7 +75,6 @@ pre-commit: # @HELP Check that code is ready to commit.
 pre-commit:
 	$(MAKE) -j \
 		fmt \
-		gen-enums \
 		gosec GOSEC_VERBOSITY="-quiet" \
 		lint \
 		shfmt \
