@@ -25,8 +25,13 @@ To create a new Enduro child workflow project:
 - Use this repository as a template:
   - With the link in the top right corner of this page
   - Or selecting it from the create new repository template dropdown
-- Replace references from `custom-enduro` to, for example `acme-enduro` in the
-  code.
+- Replace `custom-enduro-workflows` references to the new project name. For
+  example, if you are creating `acme-enduro-workflows`:
+  - Search and replace across the entire project: `custom-enduro` ->
+    `acme-enduro`.
+  - Update the environment prefix in the config package: `CUSTOM_ENDURO` ->
+    `ACME_ENDURO`
+  - Update the Tiltfile resource `Custom` label.
 - Update this readme file:
   - Change the heading and initial description
   - Remove the first three sections from the list above and the content
@@ -104,7 +109,7 @@ Bring up the Enduro environment by following the [Enduro development manual].
 
 ### Set up
 
-The specific requirements for this template are:
+The specific requirements for this project are:
 
 - clone this repository as a sibling of the Enduro repository
 - configure `CHILD_WORKFLOW_PATHS=../custom-enduro-workflows`
